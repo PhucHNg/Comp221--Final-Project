@@ -1,49 +1,58 @@
-"""Tokenize words preserving the hashtags and websites
-Count term frequencies
-Term co-occurence"""
+"""Count term frequencies"""
+#wiki.python.org
 
 #Import----------------------------------------------------------------------------------------------------
 import nltk
-from nltk.tokenize import TweetTokenizer
-from nltk.corpus import stopwords
-from nltk.stem.porter import *
-import string
-
+import operator
 
 #Function definition---------------------------------------------------------------------------------------
-def tokenize(file_name): ##Could impliment an algorithm for this
-    """ Takes as input a file name. Tokenize the tweets separating them using nltk function. Return a list of tokens"""
-    tokenizer = TweetTokenizer(strip_handles=True)
-    tokens = []
+
+class WordCount(object):
+    def __init__(self, word, count):
+        self.word = word
+        self.count = count
+
+    def getCount(wc):
+        return wc.count
+
+    def getWord(wc):
+        return wc.word
+
+    def __repr__(self):
+        return repr((self.word, self.count))
+
+    # def __cmp__(self, other):
+    #     if hasattr(other, 'count'):
+    #         return self.count.__cmp__(other.count)
+
+
+def countFrequency(file_name):
+    """ Takes in a file and count number of times a word appears. Return dictionary of count"""
+    count = {}
     file = open(file_name, 'r')
-    for line in file:
-        tokens.extend(tokenizer.tokenize(line))
+    for w in file:
+        w = str.strip(w, '\n')
+        if w not in count:
+            count[w] = 0
+        cc = count[w]
+        count[w] = cc + 1
     file.close()
-    return tokens
+    return count
 
-def preprocess(lst):
-    """ Takes in a list of words. Removes stop words and punctuations. Stem the words. Returns a new list"""
-    PUNCTUATION = set(string.punctuation)
-    STOPWORDS = set(stopwords.words('english')) + PUNCTUATION + set('RT')  # RT for retweet
-    stemmer = PorterStemmer()
-    newList = []
-    for w in lst:
-        if w.lower() not in STOPWORDS:
-            newList.append(stemmer.stem(w))
-    return newList
+def topTen(d):
+    """Rank and returns top 10 topics"""
+    word_list = []
+    for key in d:
+        word_list.append(WordCount(key,d[key]))
 
+    sorted(word_list, key=lambda wordcount: wordcount.count, reverse = True)
+    return word_list[-1]
 
-def stem(word): ## Or impliment an algorithm for this
-    """Converting a word to its stem"""
-
-
-def countFrequency(list):
-    """ Takes in a list of words and count number of times a word appears"""
 
 
 #Main program----------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    unprocessed_tokens = tokenize('1218_6_tweets.txt')
-    tokens = preprocess(unprocessed_tokens)
-    print(tokens[0:6])
+    countDict = countFrequency('all_preprocessedTweets.txt')
+    top_10 = topTen(countDict)
+    print(top_10)

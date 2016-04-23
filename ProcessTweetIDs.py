@@ -27,9 +27,10 @@ def processTweets(file_name, write_to_file):
 
     tweet_file = open(write_to_file,'w')
 
-    for line in tweet_ids:
+    for i in range(367000, len(tweet_ids)):
+        print(i)
         try:
-            tweet = api.get_status(line)
+            tweet = api.get_status(tweet_ids[i])
             try:
                 tweet_file.write(tweet.text + '\n')
             except UnicodeEncodeError:
@@ -41,6 +42,6 @@ def processTweets(file_name, write_to_file):
 
 
 #Main Program
-processTweets("1218_6.txt","1218_6_Xtweets.txt")
+processTweets("all_streaming_api.txt","all_streaming_api_tweets4.0.txt")
 
 ## On average, out of ~20 000 tweets we only got about ~200 valid, English tweets. Is that reasonable?
