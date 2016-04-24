@@ -27,7 +27,7 @@ def processTweets(file_name, write_to_file):
 
     tweet_file = open(write_to_file,'w')
 
-    for i in range(367000, len(tweet_ids)):
+    for i in range(0, len(tweet_ids)):
         print(i)
         try:
             tweet = api.get_status(tweet_ids[i])
@@ -42,6 +42,6 @@ def processTweets(file_name, write_to_file):
 
 
 #Main Program
-processTweets("all_streaming_api.txt","all_streaming_api_tweets4.0.txt")
+processTweets("all_streaming_api.txt","all_streaming_api_tweets.txt")
 
 ## On average, out of ~20 000 tweets we only got about ~200 valid, English tweets. Is that reasonable?

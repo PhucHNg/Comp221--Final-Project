@@ -1,6 +1,6 @@
 """Preprocess tweets by tokenizing, removing stopwords and stemming words"""
 
-#Import----------------------------------------------------------------------------------------------------
+# Import----------------------------------------------------------------------------------------------------
 import nltk
 from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords
@@ -8,40 +8,45 @@ from nltk.stem.porter import *
 import string
 
 
-#Function definition---------------------------------------------------------------------------------------
-def tokenize(file_name): ##Could implement an algorithm for this
+# Function definition---------------------------------------------------------------------------------------
+
+def tokenize(file_name):  # Could implement an algorithm for this
     """ Takes as input a file name. Tokenize the tweets separating them using nltk function. Return a list of tokens"""
     tokenizer = TweetTokenizer(strip_handles=True)
     tokens = []
     file = open(file_name, 'r')
     for line in file:
-        tokens.extend(tokenizer.tokenize(line))
+        tokens.append(tokenizer.tokenize(line))
     file.close()
     return tokens
 
-def preprocess(lst, file_name):
-    """ Takes in a list of words. Removes stop words and punctuations. Stem the words. Returns a file of tokens"""
+
+def preprocess(data):
+    """ Takes in a list of lists of words.
+    Removes stop words and punctuations.
+    Stem the words.
+    Returns a new list of lists of stemmed words"""
     PUNCTUATION = list(string.punctuation)
-    STOPWORDS = set(list(stopwords.words('english')) + PUNCTUATION + ['RT'])  # RT for retweet
+    STOPWORDS = set(list(stopwords.words('english')) + PUNCTUATION + ['rt'] + ['...'])  # RT for retweet
     stemmer = PorterStemmer()
+    newData = []
+    for sentence in data:
+        newSen = []
+        for word in sentence:
+            if word.lower() not in STOPWORDS:
+                #w = stemmer.stem(word)
+                newSen.append(word)
+        newData.append(newSen)
+    return newData
 
-    file = open(file_name, 'w')
-    for w in lst:
-        if w.lower() not in STOPWORDS:
-            token = stemmer.stem(w)
-            file.write(token + '\n')
-    file.close()
+
+# Run Program------------------------------------------------------------------------------------------------
+
+if __name__ == '__main__':
+    pre_data = tokenize("all_streaming_api_tweets.txt")
+    data = preprocess(pre_data)
+    for i in range(0,20):
+        print(data[i])
+        print(pre_data[i])
 
 
-def stem(word): ## Or implement an algorithm for this
-    """Converting a word to its stem"""
-
-#Run Program------------------------------------------------------------------------------------------------
-
-lst1 = tokenize('1218_6_tweets.txt')
-lst2 = tokenize('1219_6_tweets.txt')
-lst3 = tokenize('1224_6_tweets.txt')
-lst4 = tokenize('1227_6_tweets.txt')
-lst5 = tokenize('1229_6_tweets.txt')
-lst = lst1+ lst2 + lst3 + lst4 + lst5
-preprocess(lst, 'all_preprocessedTweets.txt')
