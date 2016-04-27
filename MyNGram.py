@@ -4,8 +4,12 @@ import heapq
 import math
 
 # Function defintion----------------------------------------------------------------------------------------------------
+
 @total_ordering
 class ngram(object):
+    """
+     An ngram object contains a word or sequence of words and its probability calculated from the corpus
+    """
     def __init__(self, priority, description):
         self.priority = priority
         self.description = description
@@ -28,6 +32,9 @@ class ngram(object):
 
 
 class mls(object):
+    """
+    A maximum likelihood estimate model...
+    """
     def __init__(self):
         self.n = 0 #count of the total number of words in the corpus
         self.vocab = {} #a dictionary of distinct words and their mapping to a distinct integer
@@ -89,6 +96,13 @@ class mls(object):
             w = self.lookup_vocab[id.getDescription()]
             top.append(w)
         return top
+
+
+    def topBigram(self):
+        """
+
+        :return:
+        """
 
 
 # Run program-----------------------------------------------------------------------------------------------------------
