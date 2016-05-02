@@ -2,6 +2,7 @@
 from functools import total_ordering
 import heapq
 import math
+import random
 
 # Function defintion----------------------------------------------------------------------------------------------------
 
@@ -83,12 +84,13 @@ class mle(object):
         """
         result = []
         for sentence in self.corpus:
-            self.n += len(sentence)
-            for i in range(len(sentence) - (n - 1)):
-                t = []
-                for j in range(n):
-                    t.append(sentence[i + j])
-                result.append(tuple(t))
+            if len(sentence) > 3:
+                self.n += len(sentence)
+                for i in range(len(sentence) - (n - 1)):
+                    t = []
+                    for j in range(n):
+                        t.append(sentence[i + j])
+                    result.append(tuple(t))
         return result
 
 
@@ -164,28 +166,48 @@ class mle(object):
         # for i in range(x):
         #     o = heapq.heappop(alist)
         #     result.append(o.getDescription())
-        return result[:10]
+        return result[:x]
 
 
     def buildLanguageModel(self, alist):
+        """
+        Make a language model
+        :param alist: list of all n-grams
+        :return:
+        """
+        alist = sorted(alist)
         langMap = {}
         for i in alist:
-            t = i.getDescription
+            t = i.getDescription()
             pw = self.getPreceedingWord(t)
             if pw not in langMap:
-                langMap[pw] = []
-            heapq.heappush(langMap[pw],i)
+                langMap[pw] = [t[-1]]
+            else:
+                l = langMap[pw]
+                l.append(t[-1])
+                langMap[pw] = l
         return langMap
 
 
     def topAssociatedWords(self, word, langMap, x):
-        associated_words_list = langMap[word]
-        result = []
-        for i in range(x):
-            t = heapq.heappop(associated_words_list).getDescription()
-            t = t[-1]
-            result.append(t)
+        associated_words_list = langMap[(word,)]
+        # for i in range(x):
+        #     t = heapq.hea(associated_words_list).getDescription()
+        #     t = t[-1]
+        #     result.append(t)
+        return associated_words_list[:x]
+
+    def generatePseudoTweet(self, langMap):
+        result = ''
+        nxt_word = '<s>'
+        while nxt_word != '<e>':
+            result += nxt_word +' '
+            nxt_word_list = langMap[(nxt_word,)]
+            i = random.randint(0, math.ceil((len(nxt_word_list)-1)/2))
+            nxt_word = nxt_word_list[i]
         return result
+
+
 
 
 
@@ -221,7 +243,7 @@ if __name__ == '__main__':
     #     print(w)
 
     """New test"""
-    dat = [['I', 'am'], ['I', 'am', 'hungry', 'and', 'want'], ['I', 'want', 'some', 'orange', 'juice']]
+    dat = [['<s>', 'I', 'am', '<e>'], ['<s>', 'I', 'am', 'hungry', 'and', 'want', '<e>'], ['<s>', 'I', 'want', 'some', 'orange', 'juice', '<e>']]
     my_mle = mle(dat)
     unigram = my_mle.makeNgram(1)
     bigram = my_mle.makeNgram(2)
@@ -238,8 +260,13 @@ if __name__ == '__main__':
     print(top3)
     print(top3_2)
 
+
     #Cool so makeNGram and countFrequency are both working! Yay!
     #I think mle is working..??
+
+    bi_langMap = my_mle.buildLanguageModel(pq2)
+    print(bi_langMap[('I',)])
+    print(my_mle.generatePseudoTweet(bi_langMap))
 
 
 
