@@ -31,78 +31,163 @@ class ngram(object):
         return (other and self.priority == other.priority and self.description == other.description)
 
 
-class mls(object):
+class mle(object):
     """
     A maximum likelihood estimate model...
     """
-    def __init__(self):
-        self.n = 0 #count of the total number of words in the corpus
-        self.vocab = {} #a dictionary of distinct words and their mapping to a distinct integer
-        self.lookup_vocab = {}
-        self.corpus = [] #the data represented by integers.
-        self.wordfreq = {}
+    def __init__(self, corpus):
+        # self.vocab = {} #a dictionary of distinct words and their mapping to a distinct integer
+        # self.lookup_vocab = {}
+        #NOTES: Don't need the vocabulary anymore since this is a small corpus, I'll just use words directly.
+        #When things work well I'll try to encode words.
+
+        self.n = 0  # count of the total number of words in the corpus NOTES: hmmm what is this used for??
+        self.corpus = corpus #the data: a list of lists of words
+
+        #NOTES: I can make these local variables (???)
+        #self.wordfreq = {}
+        # self.unigram = []
+        # self.bigram = []
         return
 
-    def initialize(self, lst):
-        """
-        Takes a list of lists of word.
-        Construct a vocabulary for n-gram and maps each word to an integer.
-        Create a corpus with each word represented by the integer instead.
-        Count the frequency of each word.
-        """
-        i = 1
-        for sentence in lst:
-            newSen = []
-            for word in sentence:
-                self.n += 1
-                if word not in self.vocab :
-                    self.vocab[word] = i
-                    self.lookup_vocab[i] = word
-                    i += 1
-                newSen.append(self.vocab[word])
-            self.corpus.append(newSen)
+    # NOTES: Maybe will add this back in when I have time to encode the words
+    # def initialize(self, lst):
+    #     """
+    #     Takes a list of lists of word.
+    #     Construct a vocabulary for n-gram and maps each word to an integer.
+    #     Create a corpus with each word represented by the integer instead.
+    #     Count the frequency of each word.
+    #     """
+    #     i = 1
+    #     for sentence in lst:
+    #         newSen = []
+    #         for word in sentence:
+    #             self.n += 1
+    #             if word not in self.vocab :
+    #                 self.vocab[word] = i
+    #                 self.lookup_vocab[i] = word
+    #                 i += 1
+    #             newSen.append(self.vocab[word])
+    #         self.corpus.append(newSen)
+    #
+    #     self.countFrequency()
+    #     return
 
-        self.countFrequency()
-        return
-
-
-    def countFrequency(self):
+    def makeNgram(self, n):
         """
-        Takes in a list of lists of words.
-        Counts each word frequency and stores in a dictionary countfreq.
+        Takes in a list of lists of words and n as number of words in a unit of words.
+        Each unit of words is represented by a tuple
+        Create ngram and returns a list of all ngram in the data
+        :param n: the number of words in n-gram
+        :return: list of all n-gram in tuple
         """
+        result = []
         for sentence in self.corpus:
-            for word in sentence:
-                if word not in self.wordfreq:
-                    self.wordfreq[word] = 0
-                cc = self.wordfreq[word]
-                self.wordfreq[word] = cc + 1
+            self.n += len(sentence)
+            for i in range(len(sentence) - (n - 1)):
+                t = []
+                for j in range(n):
+                    t.append(sentence[i + j])
+                result.append(tuple(t))
+        return result
 
 
-    def topUnigram(self):
+    def countFrequency(self,l):
         """
-        Calculate the unigram probability for each word.
-        Return 10 words with the highest probability (or frequency in the corpus)
-        :return: list of top 10 most probable words
+        Takes in a list of tuples each of which represents an n-gram.
+        Counts each item's frequency and stores in a dictionary.
+        :param l: list of tuples
+        :return: the dictionary of item and count
         """
-        top = []
-        pq = []
-        for key in self.wordfreq.keys():
-            des = key
-            pri = math.log(self.wordfreq[key]/self.n)
-            heapq.heappush(pq, ngram(pri, des))
-        for i in range(0, 3): #Change range to 10 for real corpus
-            id = heapq.heappop(pq)
-            w = self.lookup_vocab[id.getDescription()]
-            top.append(w)
-        return top
+        fregMap = {}
+        for i in l:
+            if i not in fregMap:
+                fregMap[i] = 0
+            cc = fregMap[i]
+            fregMap[i] = cc + 1
+        return fregMap
 
 
-    def topBigram(self):
+    def mle(self, numerator, denominator):
         """
+        Calculate the probability of each ngram using maximum likelihood estimates.
+        The formula for the calculation is ______________________
+        :param map1: frequency map of n-grams to have probability calculated (the numerator)
+        :param map2: frequency map of preceeding words (the denominator)
+        :return: priority queue of ngram objects: description is the n-gram, priority is the probability
+        """
+        result = []
+        for key in numerator:
+            ngram_count = numerator[key]
+            preceeding_word = self.getPreceedingWord(key)
+            preceeding_word_count = denominator[preceeding_word]
+            p = math.log(ngram_count/preceeding_word_count)
+            heapq.heappush(result, ngram(p, key))
+        return result
 
-        :return:
+
+    def mle(self, numerator, denominator=None):
         """
+        Same as mle() but calculate the probability of each ngram using maximum likelihood estimates for unigram.
+        Does not use the denominator parameter
+        :return: priority queue of unigram objects: description is a word, priority is its probability
+        """
+        result = []
+        for key in numerator:
+            ngram_count = numerator[key]
+            p = math.log(ngram_count/self.n)
+            #heapq.heappush(result,ngram(p, key))
+            result.append(ngram(p,key))
+        return result
+
+
+    def getPreceedingWord(self,t):
+        """
+        Get the preceeding words part in an n-gram
+        :param t: a tuple representing an n-gram
+        :return: a tuple representing an n-1-gram or preceeding word(s)
+        """
+        result =[]
+        for i in range(len(t)-1):
+            result.append(t[i])
+        return tuple(result)
+
+
+## This operation is not super informative however
+    def topNgram(self, alist, x):
+        """
+        Takes in a priority queue of n-gram items.
+        Return the first x items with the highest priority
+        :return: a list of top x items
+        """
+        result = sorted(alist)
+        # for i in range(x):
+        #     o = heapq.heappop(alist)
+        #     result.append(o.getDescription())
+        return result[:10]
+
+
+    def buildLanguageModel(self, alist):
+        langMap = {}
+        for i in alist:
+            t = i.getDescription
+            pw = self.getPreceedingWord(t)
+            if pw not in langMap:
+                langMap[pw] = []
+            heapq.heappush(langMap[pw],i)
+        return langMap
+
+
+    def topAssociatedWords(self, word, langMap, x):
+        associated_words_list = langMap[word]
+        result = []
+        for i in range(x):
+            t = heapq.heappop(associated_words_list).getDescription()
+            t = t[-1]
+            result.append(t)
+        return result
+
+
 
 
 # Run program-----------------------------------------------------------------------------------------------------------
@@ -134,6 +219,27 @@ if __name__ == '__main__':
     # topUni = lm.topUnigram()  #top uni working...
     # for w in topUni:
     #     print(w)
+
+    """New test"""
+    dat = [['I', 'am'], ['I', 'am', 'hungry', 'and', 'want'], ['I', 'want', 'some', 'orange', 'juice']]
+    my_mle = mle(dat)
+    unigram = my_mle.makeNgram(1)
+    bigram = my_mle.makeNgram(2)
+    fm = my_mle.countFrequency(unigram)
+    fm2 = my_mle.countFrequency(bigram)
+    pq1 = my_mle.mle(fm)
+    pq2 = my_mle.mle(fm2, fm)
+    top3 = my_mle.topNgram(pq1, 3)
+    top3_2 = my_mle.topNgram(pq2, 3)
+    print(unigram)
+    print(bigram)
+    print(fm)
+    print(fm2)
+    print(top3)
+    print(top3_2)
+
+    #Cool so makeNGram and countFrequency are both working! Yay!
+    #I think mle is working..??
 
 
 
