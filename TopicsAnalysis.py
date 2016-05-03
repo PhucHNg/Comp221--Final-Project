@@ -35,7 +35,7 @@ def preprocess(data):
     Returns a new list of lists of words"""
     PUNCTUATION = list(string.punctuation)
     STOPWORDS = set(list(stopwords.words('english')) + PUNCTUATION + ['rt'] + ['...'])  # 'rt' for retweet
-    STOPWORDS2 = set( PUNCTUATION + ['rt'] + ['...'])  # 'rt' for retweet
+    STOPWORDS2 = set(PUNCTUATION + ['rt'] + ['...'])  # 'rt' for retweet
     #stemmer = PorterStemmer() #Didn't make much sense to stem the words
     newData = []
     for sentence in data:
@@ -74,13 +74,13 @@ if __name__ == '__main__':
     my_mle = mle(data)
     unigram = my_mle.makeNgram(1)
     bigram = my_mle.makeNgram(2)
-    # trigram = my_mle.makeNgram(3)
+    trigram = my_mle.makeNgram(3)
     fm_unigram = my_mle.countFrequency(unigram)
     fm_bigram = my_mle.countFrequency(bigram)
-    # fm_trigram = my_mle.countFrequency(trigram)
+    fm_trigram = my_mle.countFrequency(trigram)
     pq1 = my_mle.mle(fm_unigram)
     pq2 = my_mle.mle(fm_bigram,fm_unigram)
-    # pq3 = my_mle.mle(fm_trigram, fm_bigram)
+    pq3 = my_mle.mle(fm_trigram, fm_bigram)
     # print('Top 10 most frequent words in corpus')
     # print(my_mle.topNgram(pq1, 10))
     # print('Top 10 bigrams in corpus')
@@ -91,8 +91,22 @@ if __name__ == '__main__':
 
     #Second round of test:
     bi_langMap = my_mle.buildLanguageModel(pq2)
-    print(my_mle.topAssociatedWords('syria', bi_langMap, 6))
+    #print(my_mle.topAssociatedWords('syria', bi_langMap, 6))
+    print("Pseudo tweets using bigram")
     print(my_mle.generatePseudoTweet(bi_langMap))
+    print(my_mle.generatePseudoTweet(bi_langMap))
+    print(my_mle.generatePseudoTweet(bi_langMap))
+    print(my_mle.generatePseudoTweet(bi_langMap))
+    print(my_mle.generatePseudoTweet(bi_langMap))
+
+    print("Pseudo tweets using trigram")
+    tri_langMap = my_mle.buildLanguageModel(pq3)
+    print(my_mle.generateTrigramPseudoTweet(tri_langMap,bi_langMap))
+    print(my_mle.generateTrigramPseudoTweet(tri_langMap, bi_langMap))
+    print(my_mle.generateTrigramPseudoTweet(tri_langMap, bi_langMap))
+    print(my_mle.generateTrigramPseudoTweet(tri_langMap, bi_langMap))
+    print(my_mle.generateTrigramPseudoTweet(tri_langMap, bi_langMap))
+
 
 
 

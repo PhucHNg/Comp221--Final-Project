@@ -179,7 +179,7 @@ class mle(object):
         langMap = {}
         for i in alist:
             t = i.getDescription()
-            pw = self.getPreceedingWord(t)
+            pw = ' '.join(self.getPreceedingWord(t)) #turn tuple into string
             if pw not in langMap:
                 langMap[pw] = [t[-1]]
             else:
@@ -190,7 +190,7 @@ class mle(object):
 
 
     def topAssociatedWords(self, word, langMap, x):
-        associated_words_list = langMap[(word,)]
+        associated_words_list = langMap[word]
         # for i in range(x):
         #     t = heapq.hea(associated_words_list).getDescription()
         #     t = t[-1]
@@ -198,13 +198,41 @@ class mle(object):
         return associated_words_list[:x]
 
     def generatePseudoTweet(self, langMap):
+        """
+
+        :param langMap: language map: key an n-gram, value a list of unigrams that follows this n-gram, ordered by mle probabilities
+        :return: a string of pseudo tweets
+        """
         result = ''
         nxt_word = '<s>'
         while nxt_word != '<e>':
-            result += nxt_word +' '
-            nxt_word_list = langMap[(nxt_word,)]
+            result += nxt_word + ' '
+            nxt_word_list = langMap[nxt_word]
             i = random.randint(0, math.ceil((len(nxt_word_list)-1)/2))
             nxt_word = nxt_word_list[i]
+        return result
+
+
+    def generateTrigramPseudoTweet(self, tri_langMap, bi_langMap):
+        """
+
+        :type bi_langMap: object
+        """
+        i = random.randint(0, 6)
+        nxt_word = "<s> " + bi_langMap['<s>'][i]
+        pre_word = ''
+        result = nxt_word
+        while '<e>' not in nxt_word:
+            try:
+                nxt_word_list = tri_langMap[nxt_word]
+                i = random.randint(0, math.ceil((len(nxt_word_list) - 1) / 2))
+                pre_word = nxt_word
+                result += ' ' + nxt_word_list[i]
+                nxt_word = str.split(nxt_word)[-1] + ' ' + nxt_word_list[i]
+            except KeyError:
+                print("key error")
+                print(nxt_word)
+                break
         return result
 
 
@@ -265,7 +293,7 @@ if __name__ == '__main__':
     #I think mle is working..??
 
     bi_langMap = my_mle.buildLanguageModel(pq2)
-    print(bi_langMap[('I',)])
+    print(bi_langMap['I'])
     print(my_mle.generatePseudoTweet(bi_langMap))
 
 
