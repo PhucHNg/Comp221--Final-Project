@@ -1,3 +1,4 @@
+
 # Import----------------------------------------------------------------------------------------------------------------
 from functools import total_ordering
 import heapq
@@ -9,7 +10,8 @@ import random
 @total_ordering
 class ngram(object):
     """
-     An ngram object contains a word or sequence of words and its probability calculated from the corpus
+     An ngram object contains a description: word or sequence of words (ngram)
+     and a priority: ngram's probability calculated from the corpus
     """
     def __init__(self, priority, description):
         self.priority = priority
@@ -34,58 +36,26 @@ class ngram(object):
 
 class mle(object):
     """
-    A maximum likelihood estimate model...
+    Class to create the n-gram model
     """
     def __init__(self, corpus):
-        # self.vocab = {} #a dictionary of distinct words and their mapping to a distinct integer
-        # self.lookup_vocab = {}
-        #NOTES: Don't need the vocabulary anymore since this is a small corpus, I'll just use words directly.
-        #When things work well I'll try to encode words.
-
-        self.n = 0  # count of the total number of words in the corpus NOTES: hmmm what is this used for??
+        self.N = 0  # count of the total number of words in the corpus NOTES: hmmm what is this used for??
         self.corpus = corpus #the data: a list of lists of words
-
-        #NOTES: I can make these local variables (???)
-        #self.wordfreq = {}
-        # self.unigram = []
-        # self.bigram = []
         return
 
-    # NOTES: Maybe will add this back in when I have time to encode the words
-    # def initialize(self, lst):
-    #     """
-    #     Takes a list of lists of word.
-    #     Construct a vocabulary for n-gram and maps each word to an integer.
-    #     Create a corpus with each word represented by the integer instead.
-    #     Count the frequency of each word.
-    #     """
-    #     i = 1
-    #     for sentence in lst:
-    #         newSen = []
-    #         for word in sentence:
-    #             self.n += 1
-    #             if word not in self.vocab :
-    #                 self.vocab[word] = i
-    #                 self.lookup_vocab[i] = word
-    #                 i += 1
-    #             newSen.append(self.vocab[word])
-    #         self.corpus.append(newSen)
-    #
-    #     self.countFrequency()
-    #     return
 
     def makeNgram(self, n):
         """
         Takes in a list of lists of words and n as number of words in a unit of words.
         Each unit of words is represented by a tuple
         Create ngram and returns a list of all ngram in the data
-        :param n: the number of words in n-gram
+        :param n: the number of words in n-gram (e.g: 2 for bigram, 3 for trigram, etc.)
         :return: list of all n-gram in tuple
         """
         result = []
         for sentence in self.corpus:
             if len(sentence) > 3:
-                self.n += len(sentence)
+                self.N += len(sentence)
                 for i in range(len(sentence) - (n - 1)):
                     t = []
                     for j in range(n):
@@ -94,56 +64,41 @@ class mle(object):
         return result
 
 
-    def countFrequency(self,l):
+    def countFrequency(self, alist):
         """
         Takes in a list of tuples each of which represents an n-gram.
         Counts each item's frequency and stores in a dictionary.
-        :param l: list of tuples
+        :param l: list of n-grams in tuple
         :return: the dictionary of item and count
         """
-        fregMap = {}
-        for i in l:
-            if i not in fregMap:
-                fregMap[i] = 0
-            cc = fregMap[i]
-            fregMap[i] = cc + 1
-        return fregMap
+        freqMap = {}
+        for i in alist:
+            if i not in freqMap:
+                freqMap[i] = 0
+            cc = freqMap[i]
+            freqMap[i] = cc + 1
+        return freqMap
 
 
-    def mle(self, numerator, denominator):
+    def calculateMLE(self, current, preceding):
         """
         Calculate the probability of each ngram using maximum likelihood estimates.
-        The formula for the calculation is ______________________
+        The formula for the calculation is count(current n-gram)/count(preceding n-gram)
         :param map1: frequency map of n-grams to have probability calculated (the numerator)
         :param map2: frequency map of preceeding words (the denominator)
-        :return: priority queue of ngram objects: description is the n-gram, priority is the probability
+        :return: sorted list of ngram objects: description is the n-gram, sorted in non-increasing order based on the probability
         """
         result = []
-        for key in numerator:
-            ngram_count = numerator[key]
-            preceeding_word = self.getPreceedingWord(key)
-            preceeding_word_count = denominator[preceeding_word]
-            p = math.log(ngram_count/preceeding_word_count)
-            heapq.heappush(result, ngram(p, key))
-        return result
+        for key in current:
+            ngram_count = current[key]
+            preceding_word = self.getPrecedingWord(key)
+            preceding_word_count = preceding[preceding_word]
+            p = math.log(ngram_count/preceding_word_count)
+            result.append(ngram(p, key))
+        return sorted(result)
 
 
-    def mle(self, numerator, denominator=None):
-        """
-        Same as mle() but calculate the probability of each ngram using maximum likelihood estimates for unigram.
-        Does not use the denominator parameter
-        :return: priority queue of unigram objects: description is a word, priority is its probability
-        """
-        result = []
-        for key in numerator:
-            ngram_count = numerator[key]
-            p = math.log(ngram_count/self.n)
-            #heapq.heappush(result,ngram(p, key))
-            result.append(ngram(p,key))
-        return result
-
-
-    def getPreceedingWord(self,t):
+    def getPrecedingWord(self,t):
         """
         Get the preceeding words part in an n-gram
         :param t: a tuple representing an n-gram
@@ -155,89 +110,100 @@ class mle(object):
         return tuple(result)
 
 
-## This operation is not super informative however
-    def topNgram(self, alist, x):
+    def topNgram(self, n, x):
         """
-        Takes in a priority queue of n-gram items.
-        Return the first x items with the highest priority
-        :return: a list of top x items
+        Provide the most frequent words in the corpus to help identify important topics in corpus
+        :param n: n in n-gram
+        :param x: number of words to return
+        :return: top x number of ngrams that have the highest frequency count
         """
-        result = sorted(alist)
-        # for i in range(x):
-        #     o = heapq.heappop(alist)
-        #     result.append(o.getDescription())
+        ngramList = self.makeNgram(n)
+        fregMap = self.countFrequency(ngramList)
+        result = []
+        for key in fregMap:
+            result.append(ngram(fregMap[key], key))
+        result = sorted(result)
         return result[:x]
 
 
-    def buildLanguageModel(self, alist):
+    def buildLanguageModel(self, current, preceding):
         """
-        Make a language model
-        :param alist: list of all n-grams
-        :return:
+        Build a language model by mapping each ngram to a list of words ordered by their probabilities of following the key ngram
+        :param map1: frequency map of current n-grams to have probability calculated
+        :param map2: frequency map of preceding words
+        :return: a dictionary, mapping a string to a list of words ordered based on their probabilities of following key ngram
         """
-        alist = sorted(alist)
+        mle_ngram = self.calculateMLE(current,preceding)
+
         langMap = {}
-        for i in alist:
+        for i in mle_ngram:
             t = i.getDescription()
-            pw = ' '.join(self.getPreceedingWord(t)) #turn tuple into string
+            pw = ' '.join(self.getPrecedingWord(t)) #turn tuple into string
             if pw not in langMap:
                 langMap[pw] = [t[-1]]
             else:
                 l = langMap[pw]
                 l.append(t[-1])
                 langMap[pw] = l
+
         return langMap
 
 
     def topAssociatedWords(self, word, langMap, x):
+        """
+        :param word: a word to look up following word
+        :param langMap: language model output graph
+        :param x: number of words to return
+        :return: Return top x words that have the highest probability of following word
+        """
         associated_words_list = langMap[word]
-        # for i in range(x):
-        #     t = heapq.hea(associated_words_list).getDescription()
-        #     t = t[-1]
-        #     result.append(t)
         return associated_words_list[:x]
 
-    def generatePseudoTweet(self, langMap):
-        """
 
-        :param langMap: language map: key an n-gram, value a list of unigrams that follows this n-gram, ordered by mle probabilities
+    def generateTweet_Bigram(self, bigram_model):
+        """
+        Takes a dictionary representing a Bigram language model.
+        Construct some pseudo tweets based on the vocabulary in the language model.
+        The function does not always append the most probable following word,
+        but choose a random word in the top 30 percentile, to append to sentence to create more variety of pseudo tweets.
+        :param bigram_model: bigram language model
         :return: a string of pseudo tweets
         """
         result = ''
         nxt_word = '<s>'
         while nxt_word != '<e>':
             result += nxt_word + ' '
-            nxt_word_list = langMap[nxt_word]
-            i = random.randint(0, math.ceil((len(nxt_word_list)-1)/2))
+            nxt_word_list = bigram_model[nxt_word]
+            i = random.randint(0, math.ceil((len(nxt_word_list)-1)/3))
             nxt_word = nxt_word_list[i]
         return result
 
 
-    def generateTrigramPseudoTweet(self, tri_langMap, bi_langMap):
+    def generateTweet_Trigram(self, trigram_model, bigram_model):
         """
-
-        :type bi_langMap: object
+        Takes a dictionary representing a Trigram language model.
+        Construct some pseudo tweets based on the vocabulary in the language model.
+        The function uses the bigram model to initialize the function.
+        The function does not always append the most probable following word,
+        but choose a random word in the top 30 percentile, to append to sentence to create more variety of pseudo tweets.
+        :param trigram_model: trigram language model
+        :param bigram_model: bigram language model
+        :return: a string of pseudo tweets
         """
         i = random.randint(0, 6)
-        nxt_word = "<s> " + bi_langMap['<s>'][i]
-        pre_word = ''
+        nxt_word = "<s> " + bigram_model['<s>'][i]
         result = nxt_word
         while '<e>' not in nxt_word:
             try:
-                nxt_word_list = tri_langMap[nxt_word]
-                i = random.randint(0, math.ceil((len(nxt_word_list) - 1) / 2))
-                pre_word = nxt_word
-                result += ' ' + nxt_word_list[i]
-                nxt_word = str.split(nxt_word)[-1] + ' ' + nxt_word_list[i]
+                nxt_word_list = trigram_model[nxt_word]
+                i = random.randint(0, math.ceil((len(nxt_word_list) - 1) /3))
+                result += ' ' + nxt_word_list[0]
+                nxt_word = str.split(nxt_word)[-1] + ' ' + nxt_word_list[0]
             except KeyError:
                 print("key error")
                 print(nxt_word)
                 break
         return result
-
-
-
-
 
 
 # Run program-----------------------------------------------------------------------------------------------------------
