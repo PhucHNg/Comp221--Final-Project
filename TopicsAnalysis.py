@@ -2,18 +2,20 @@
 Preprocess tweets by tokenizing and removing stopwords.
 Create a language model that has unigram and bigram which returns word or pair of word that are most probable
 in the corpus.
+
+References:
+marcobonzanini.com
+stackoverflow.com
+wiki.python.org
 """
-# wiki.python.org
+
 
 # Import----------------------------------------------------------------------------------------------------
 import nltk
 from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords
-from nltk.stem.porter import *
 import string
 from MyNGram import mle
-from MyNGram import ngram
-import heapq
 
 # Function definition-------------------------------------------------------------------------------------
 
@@ -93,50 +95,38 @@ def removeHashtags(data):
 # Run program----------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    #First preprocess the tweets:
     pre_data = tokenize("all_streaming_api_tweets.txt")
     data0 = preprocess(pre_data, False)
     data = removeHashtags(data0)
 
+    #Create an Maximum Likelihood Estimate object
     my_mle = mle(data)
-    unigram = my_mle.makeNgram(1)
-    bigram = my_mle.makeNgram(2)
-    trigram = my_mle.makeNgram(3)
 
-    # print(topNgram(unigram))
-    # print(topNgram(bigram))
-    # print(topNgram(trigram))
-    fm_unigram = my_mle.countFrequency(unigram)
-    fm_bigram = my_mle.countFrequency(bigram)
-    fm_trigram = my_mle.countFrequency(trigram)
-    #pq1 = my_mle.mle(fm_unigram)
-    #pq2 = my_mle.calculateMLE(fm_bigram,fm_unigram)
-    #pq3 = my_mle.calculateMLE(fm_trigram, fm_bigram)
-    # # print('Top 10 most frequent words in corpus')
-    # # print(my_mle.topNgram(pq1, 10))
-    # # print('Top 10 bigrams in corpus')
-    # # print(my_mle.topNgram(pq2, 10))
-    # # print('Top 10 trigrams in corpus')
-    # # print(my_mle.topNgram(pq3, 10))
-    #
-    #
-    # #Second round of test:
-    bi_langMap = my_mle.buildLanguageModel(fm_bigram, fm_unigram)
-    # print(my_mle.topAssociatedWords('Syrian', bi_langMap, 6))
-    # print(my_mle.topAssociatedWords('nation', bi_langMap, 6))
-    # print(my_mle.topAssociatedWords('faces', bi_langMap, 6))
+    #Make n-grams and count frequency of n-grams:
+    unigram_freqMap = my_mle.countFrequency(1)
+    bigram_freqMap = my_mle.countFrequency(2)
+    trigram_freqMap = my_mle.countFrequency(3)
+
+    print('Top 10 most frequent words in corpus') #These results exclude words with hashtags
+    print(my_mle.topNgram(unigram_freqMap, 10))
+    print('Top 10 bigrams in corpus')
+    print(my_mle.topNgram(bigram_freqMap, 10))
+    print('Top 10 trigrams in corpus')
+    print(my_mle.topNgram(trigram_freqMap, 10))
+
+    #Build language models to generate tweets
+    bigram_langMod = my_mle.buildLanguageModel(bigram_freqMap, unigram_freqMap)
     print("Pseudo tweets using bigram")
-    for i in range(3):
-        print(my_mle.generateTweet_Bigram(bi_langMap))
 
-    print("Pseudo tweets using trigram")
-    tri_langMap = my_mle.buildLanguageModel(fm_trigram,fm_bigram)
-    # print(my_mle.topAssociatedWords('Arab League', tri_langMap, 3))
-    # print(my_mle.topAssociatedWords('League killing', tri_langMap, 3))
-    # print(my_mle.topAssociatedWords('killing us', tri_langMap, 5))
-    # print(my_mle.topAssociatedWords('security forces', tri_langMap, 5))
-    # print(my_mle.topAssociatedWords('forces Reminiscent', tri_langMap, 5))
     for i in range(3):
-        print(my_mle.generateTweet_Trigram(tri_langMap,bi_langMap))
+        print(my_mle.generateTweet_Bigram(bigram_langMod))
+
+    trigram_langMod = my_mle.buildLanguageModel(trigram_freqMap, bigram_freqMap)
+    print("Pseudo tweets using trigram")
+
+    for i in range(3):
+        print(my_mle.generateTweet_Trigram(trigram_langMod, bigram_langMod)) #To run trigram tweet generator, need both trigram and bigram language model
 
 
 
